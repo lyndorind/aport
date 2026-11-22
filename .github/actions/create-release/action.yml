@@ -1,0 +1,36 @@
+name: Create Tag and Release
+description: Creates a Git tag and publishes a GitHub Release with assets
+
+inputs:
+  version:
+    description: 'Release version (e.g. v1.0.0)'
+    required: true
+  release_notes:
+    description: 'Release description from CHANGELOG'
+    required: true
+  files:
+    description: 'Files to attach to release'
+    required: true
+  token:
+    description: 'GitHub token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create and push Git tag
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git tag -a "${{ inputs.version }}" -m "Release ${{ inputs.version }}"
+        git push origin "${{ inputs.version }}"
+
+    - name: Create GitHub Release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        gh release create "${{ inputs.version }}" ${{ inputs.files }} \
+          --title "Release ${{ inputs.version }}" \
+          --notes "${{ inputs.release_notes }}"
