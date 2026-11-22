@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "start": "node index.js",
-  "lint": "eslint .",
-  "test": "vitest run",
-  "test:coverage": "vitest run --coverage --coverage.reporter=text --coverage.reporter=lcov"
+    "start": "node index.js",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage --coverage.reporter=text --coverage.reporter=lcov"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,8 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^5.1.1",
+    "allure-commandline": "^2.46.1",
+    "allure-vitest": "^3.15.0",
     "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "supertest": "^7.3.2",
