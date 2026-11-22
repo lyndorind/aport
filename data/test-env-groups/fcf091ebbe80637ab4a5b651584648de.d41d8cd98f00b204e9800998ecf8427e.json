@@ -1,0 +1,1 @@
+{"id":"fcf091ebbe80637ab4a5b651584648de.d41d8cd98f00b204e9800998ecf8427e","fullName":"lab2-git:tests/app.test.mjs#API Endpoints GET /non-existent має повертати 404","name":"GET /non-existent має повертати 404","status":"passed","testResultsByEnv":{"default":"cd7377c4e1e4f91f7082e968545f38a6"}}

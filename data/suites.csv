@@ -1,3 +1,0 @@
-"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
-"","25","GET /health має повертати статус 200 та OK","tests/app.test.mjs","2026-11-22","passed","2026-11-22","","API Endpoints","",""
-"","4","GET /non-existent має повертати 404","tests/app.test.mjs","2026-11-22","passed","2026-11-22","","API Endpoints","",""

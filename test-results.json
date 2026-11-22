@@ -1,0 +1,1 @@
+{"byId":{"19d445c3aa2f416fb3d0558c18ca4b89":{"id":"19d445c3aa2f416fb3d0558c18ca4b89","name":"GET /health має повертати статус 200 та OK","duration":19,"status":"passed","environment":"default"},"cd7377c4e1e4f91f7082e968545f38a6":{"id":"cd7377c4e1e4f91f7082e968545f38a6","name":"GET /non-existent має повертати 404","duration":4,"status":"passed","environment":"default"}}}

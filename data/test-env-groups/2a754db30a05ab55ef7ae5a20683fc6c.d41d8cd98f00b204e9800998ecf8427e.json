@@ -1,0 +1,1 @@
+{"id":"2a754db30a05ab55ef7ae5a20683fc6c.d41d8cd98f00b204e9800998ecf8427e","fullName":"lab2-git:tests/app.test.mjs#API Endpoints GET /health має повертати статус 200 та OK","name":"GET /health має повертати статус 200 та OK","status":"passed","testResultsByEnv":{"default":"19d445c3aa2f416fb3d0558c18ca4b89"}}
