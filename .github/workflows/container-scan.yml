@@ -42,17 +42,17 @@ jobs:
 
       - name: Run Grype vulnerability scanner
         uses: anchore/scan-action@v4
+        id: grype
         with:
           image: ${{ env.IMAGE_REF }}
           fail-build: false
           output-format: sarif
-          output-file: grype-results.sarif
 
       - name: Upload Grype scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('grype-results.sarif') != ''
+        if: always() && steps.grype.outputs.sarif != ''
         with:
-          sarif_file: grype-results.sarif
+          sarif_file: ${{ steps.grype.outputs.sarif }}
           category: grype-container-scan
 
       - name: Run Snyk Container scan
@@ -64,9 +64,14 @@ jobs:
           image: ${{ env.IMAGE_REF }}
           args: --sarif-file-output=snyk-results.sarif
 
+      - name: Sanitize Snyk SARIF file
+        if: always() && hashFiles('snyk-results.sarif') != ''
+        run: |
+          jq '(.runs[].tool.driver.rules[]?.properties | select(has("security-severity")) | .["security-severity"]) |= (if (tonumber? // null) == null then "5.0" else tostring end)' snyk-results.sarif > snyk-clean.sarif
+
       - name: Upload Snyk scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('snyk-results.sarif') != ''
+        if: always() && hashFiles('snyk-clean.sarif') != ''
         with:
-          sarif_file: snyk-results.sarif
+          sarif_file: snyk-clean.sarif
           category: snyk-container-scan
