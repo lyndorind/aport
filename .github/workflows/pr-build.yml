@@ -1,0 +1,35 @@
+name: PR Build and Package
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package and generate SHA-256
+        run: |
+          npm pack
+          sha256sum *.tgz > package.sha256
+
+      - name: Upload package and checksum artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-package-artifact
+          path: |
+            *.tgz
+            package.sha256
