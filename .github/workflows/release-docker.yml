@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: quay.io
-  IMAGE_NAME: <lyndorind>/aport
+  IMAGE_NAME: lyndorind/aport
 
 jobs:
   build-and-push:
