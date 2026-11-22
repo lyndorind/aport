@@ -1,0 +1,58 @@
+name: Release Package
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package and generate SHA-256
+        run: |
+          npm pack
+          sha256sum *.tgz > package.sha256
+
+      - name: Extract version and changelog notes
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+          NOTES=$(awk "/^## \[$VERSION\]/{flag=1;next}/^## \[/{flag=0}flag" CHANGELOG.md)
+          {
+            echo 'notes<<EOF'
+            echo "$NOTES"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Tag and Release via Composite Action
+        uses: ./.github/actions/create-release
+        with:
+          version: ${{ steps.meta.outputs.version }}
+          release_notes: ${{ steps.meta.outputs.notes }}
+          files: "*.tgz package.sha256"
+          token: ${{ secrets.GITHUB_TOKEN }}
