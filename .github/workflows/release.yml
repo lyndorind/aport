@@ -42,6 +42,11 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=v$VERSION" >> $GITHUB_OUTPUT
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
           NOTES=$(awk "/^## \[$VERSION\]/{flag=1;next}/^## \[/{flag=0}flag" CHANGELOG.md)
           {
             echo 'notes<<EOF'
@@ -50,6 +55,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Create Tag and Release via Composite Action
+        if: steps.meta.outputs.exists == 'false'
         uses: ./.github/actions/create-release
         with:
           version: ${{ steps.meta.outputs.version }}
