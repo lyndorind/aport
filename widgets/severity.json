@@ -1,0 +1,1 @@
+[{"uid":"5bc8c7c5b722ae0f","name":"GET /non-existent має повертати 404","time":{"start":1795355252971,"stop":1795355252975,"duration":4},"status":"passed","severity":"normal"},{"uid":"db05ad18020615ff","name":"GET /health має повертати статус 200 та OK","time":{"start":1795355252946,"stop":1795355252971,"duration":25},"status":"passed","severity":"normal"}]
