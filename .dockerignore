@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.github
+coverage
+allure-results
+allure-report
+tests
+*.tgz
+.env
+.env.*
+README.md
+sonar-project.properties
