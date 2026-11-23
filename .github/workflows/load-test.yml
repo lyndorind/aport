@@ -30,11 +30,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies and start API
         env:
           DATABASE_URL: postgres://aport:aport_secret_pass@localhost:5432/aportdb
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: aport
+          DB_PASSWORD: aport_secret_pass
+          DB_NAME: aportdb
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: aport
+          PGPASSWORD: aport_secret_pass
+          PGDATABASE: aportdb
           PORT: 3000
         run: |
           npm install

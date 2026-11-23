@@ -2,6 +2,7 @@ const express = require('express');
 const { Pool } = require('pg');
 
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 const poolConfig = process.env.DATABASE_URL
@@ -28,8 +29,13 @@ async function initDb() {
     console.log('Database initialized successfully');
   } catch (err) {
     console.error('Database initialization failed:', err);
+    throw err;
   }
 }
+
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Aport API is running' });
+});
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
@@ -66,11 +72,19 @@ app.post('/api/items', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
-  initDb().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+  initDb()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Database initialization failed:', err);
+      process.exit(1);
     });
-  });
 }
 
-module.exports = { app, pool, initDb };
+app.initDb = initDb;
+app.pool = pool;
+
+module.exports = app;
