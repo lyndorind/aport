@@ -15,6 +15,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_test_password
+          POSTGRES_DB: aport_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,7 +46,13 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run unit tests with coverage
+      - name: Run unit and integration tests with coverage
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: ci_test_password
+          DB_NAME: aport_test
         run: npm run test:coverage
 
       - name: Upload coverage reports to Codecov

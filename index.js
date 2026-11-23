@@ -2,14 +2,15 @@ const express = require('express');
 const { Pool } = require('pg');
 
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT) || 5432,
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'aport_db',
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
 async function initDb() {
@@ -35,13 +36,14 @@ app.get('/api/items', async (req, res) => {
     const result = await pool.query('SELECT * FROM items ORDER BY id ASC');
     res.status(200).json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching items:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 app.post('/api/items', async (req, res) => {
   const { name } = req.body;
-  if (!name) {
+  if (!name || typeof name !== 'string') {
     return res.status(400).json({ error: 'Field "name" is required' });
   }
   try {
@@ -51,7 +53,8 @@ app.post('/api/items', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error creating item:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -69,5 +72,8 @@ if (require.main === module) {
       process.exit(1);
     });
 }
+
+app.initDb = initDb;
+app.pool = pool;
 
 module.exports = app;
