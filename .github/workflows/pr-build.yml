@@ -7,9 +7,28 @@ on:
 permissions:
   contents: write
 
+env:
+  REGISTRY: quay.io
+  IMAGE_NAME: lyndorind/aport
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_test_password
+          POSTGRES_DB: aport_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout repository
@@ -27,7 +46,13 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run unit tests with coverage
+      - name: Run unit and integration tests with coverage
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: ci_test_password
+          DB_NAME: aport_test
         run: npm run test:coverage
 
       - name: Upload coverage reports to Codecov
@@ -70,3 +95,41 @@ jobs:
         with:
           name: pr-package-artifact
           path: "*.tgz"
+
+  docker-pr-build:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Extract temporary PR tags for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=sha,prefix=sha-
+
+      - name: Build and push temporary PR Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
