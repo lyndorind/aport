@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+env:
+  REGISTRY: quay.io
+  IMAGE_NAME: lyndorind/aport
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -70,3 +74,41 @@ jobs:
         with:
           name: pr-package-artifact
           path: "*.tgz"
+
+  docker-pr-build:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Extract temporary PR tags for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=sha,prefix=sha-
+
+      - name: Build and push temporary PR Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
