@@ -66,11 +66,19 @@ app.post('/api/items', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
-  initDb().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+  initDb()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Database initialization failed:', err);
+      process.exit(1);
     });
-  });
 }
 
-module.exports = { app, pool, initDb };
+app.initDb = initDb;
+app.pool = pool;
+
+module.exports = app;
