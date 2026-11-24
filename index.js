@@ -1,5 +1,18 @@
 const express = require('express');
 const { Pool } = require('pg');
+const { logs, SeverityNumber } = require('@opentelemetry/api-logs');
+
+const logger = logs.getLogger('aport-api-logger');
+
+function emitLog(severityNumber, severityText, body, attributes = {}) {
+  console.log(`[${severityText}] ${body}`, Object.keys(attributes).length ? attributes : '');
+  logger.emit({
+    severityNumber,
+    severityText,
+    body,
+    attributes,
+  });
+}
 
 const app = express();
 app.disable('x-powered-by');
@@ -26,14 +39,15 @@ async function initDb() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    console.log('Database initialized successfully');
+    emitLog(SeverityNumber.INFO, 'INFO', 'Database initialized successfully');
   } catch (err) {
-    console.error('Database initialization failed:', err);
+    emitLog(SeverityNumber.ERROR, 'ERROR', 'Database initialization failed', { error: err.message });
     throw err;
   }
 }
 
 app.get('/', (req, res) => {
+  emitLog(SeverityNumber.INFO, 'INFO', 'Root endpoint requested');
   res.status(200).json({ message: 'Aport API is running' });
 });
 
@@ -44,9 +58,10 @@ app.get('/health', (req, res) => {
 app.get('/api/items', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, name, created_at FROM items ORDER BY id ASC');
+    emitLog(SeverityNumber.INFO, 'INFO', 'Fetched items list', { count: result.rows.length });
     res.status(200).json(result.rows);
   } catch (err) {
-    console.error('GET /api/items error:', err);
+    emitLog(SeverityNumber.ERROR, 'ERROR', 'GET /api/items error', { error: err.message });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -54,6 +69,7 @@ app.get('/api/items', async (req, res) => {
 app.post('/api/items', async (req, res) => {
   const { name } = req.body || {};
   if (!name || typeof name !== 'string') {
+    emitLog(SeverityNumber.WARN, 'WARN', 'Invalid POST /api/items payload');
     return res.status(400).json({ error: 'Field "name" is required' });
   }
 
@@ -62,9 +78,10 @@ app.post('/api/items', async (req, res) => {
       'INSERT INTO items (name) VALUES ($1) RETURNING id, name, created_at',
       [name]
     );
+    emitLog(SeverityNumber.INFO, 'INFO', 'Created new item', { itemId: result.rows[0].id, name });
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('POST /api/items error:', err);
+    emitLog(SeverityNumber.ERROR, 'ERROR', 'POST /api/items error', { error: err.message });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -75,11 +92,11 @@ if (require.main === module) {
   initDb()
     .then(() => {
       app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        emitLog(SeverityNumber.INFO, 'INFO', `Server is running on port ${PORT}`);
       });
     })
     .catch((err) => {
-      console.error('Database initialization failed:', err);
+      emitLog(SeverityNumber.ERROR, 'ERROR', 'Startup failed', { error: err.message });
       process.exit(1);
     });
 }
