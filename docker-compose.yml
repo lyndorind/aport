@@ -1,4 +1,48 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aport
+      POSTGRES_PASSWORD: aport_secret_pass
+      POSTGRES_DB: aportdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aport -d aportdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://aport:aport_secret_pass@db:5432/aportdb
+      OTEL_SERVICE_NAME: aport-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      db:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
   prometheus:
     image: prom/prometheus:latest
     restart: unless-stopped
@@ -48,6 +92,7 @@ services:
       - tempo
 
 volumes:
+  pgdata:
   prometheus_data:
   loki_data:
   tempo_data:
